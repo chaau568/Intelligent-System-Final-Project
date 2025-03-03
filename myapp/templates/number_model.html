@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+<!--  -->
+{% block title %}
+<title>Number Classification Model</title>
+<style>
+  #canvas {
+    border: 2px solid black;
+    background-color: white;
+  }
+</style>
+{% endblock %}
+<!--  -->
+{% block content %}
+<div>
+  <h2>Draw and Send to Django</h2>
+  <canvas id="canvas" width="420" height="420"></canvas>
+  <br />
+  <button onclick="clearCanvas()">Clear</button>
+  <button onclick="sendToServer()">Send</button>
+
+  <script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    let isDrawing = false;
+
+    canvas.addEventListener("mousedown", () => (isDrawing = true));
+    canvas.addEventListener("mouseup", () => (isDrawing = false));
+    canvas.addEventListener("mousemove", draw);
+
+    function draw(event) {
+      if (!isDrawing) return;
+      ctx.fillStyle = "black";
+      ctx.fillRect(event.offsetX, event.offsetY, 15, 15); // วาดจุด 4x4 px
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function sendToServer() {
+      const imageData = canvas.toDataURL("image/png"); // แปลงเป็น Base64
+
+      // ใช้ฟังก์ชันใน JavaScript เพื่อแปลงภาพจากขนาด 128x128 เป็น 28x28
+      const img = new Image();
+      img.src = imageData;
+      img.onload = function () {
+        const canvasResized = document.createElement("canvas");
+        const ctxResized = canvasResized.getContext("2d");
+        canvasResized.width = 28;
+        canvasResized.height = 28;
+        ctxResized.drawImage(img, 0, 0, 28, 28); // Resize image
+
+        const resizedImageData = canvasResized.toDataURL("image/png"); // ได้ Base64 ของภาพที่มีขนาด 28x28
+        fetch("/process_image/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCSRFToken(),
+          },
+          body: JSON.stringify({ image: resizedImageData }),
+        })
+          .then((response) => response.json())
+          .then((data) => alert(data.message))
+          .catch((error) => console.error("Error:", error));
+      };
+    }
+
+    function getCSRFToken() {
+      return (
+        document.cookie
+          .split("; ")
+          .find((row) => row.startsWith("csrftoken"))
+          ?.split("=")[1] || ""
+      );
+    }
+  </script>
+</div>
+
+<!--  -->
+{% endblock %}
