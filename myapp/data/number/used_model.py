@@ -53,7 +53,7 @@ def graph(confidence):
     plt.ylabel("Confidence (%)")
     plt.title("Predicted Probabilities")
     plt.xticks(classes)  # กำหนดให้แกน X เป็น 0-9
-    plt.ylim(0, 120)  # กำหนดช่วง Y ให้อยู่ที่ 0-100%
+    plt.ylim(0, 100)  # กำหนดช่วง Y ให้อยู่ที่ 0-100%
 
     # แสดงค่าความมั่นใจบนแท่ง
     for i, score in enumerate(confidence_scores):

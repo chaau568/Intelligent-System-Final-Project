@@ -1,3 +1,5 @@
-from django.contrib import admin
+from django.contrib import admin #type: ignore
+from .models import User_Details
 
-# Register your models here.
+admin.site.register(User_Details)
+

@@ -9,6 +9,47 @@
       integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
       crossorigin="anonymous"
     />
+    <style>
+      body {
+        background-color: #f8f9fa; /* พื้นหลังสีเทาอ่อน */
+        color: #343a40; /* สีข้อความเทาเข้ม */
+        font-family: "Roboto", sans-serif; /* ใช้ฟอนต์ที่สะอาดตา */
+      }
+
+      .container {
+        background-color: #ffffff; /* พื้นหลังของ container เป็นสีขาว */
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* เงาอ่อนๆ ทำให้ดูทันสมัย */
+      }
+
+      h1 {
+        font-size: 2.5rem; /* ขนาดหัวข้อที่ใหญ่ */
+        font-weight: 500; /* ทำให้หัวข้อไม่หนักเกินไป */
+        color: #007bff; /* สีฟ้าสำหรับหัวข้อ */
+        text-align: center; /* จัดกึ่งกลาง */
+      }
+
+      .list-group-item {
+        background-color: #f8f9fa;
+        color: #343a40;
+        border: 1px solid #ddd; /* ขอบของรายการ */
+        border-radius: 5px; /* ขอบมน */
+        margin-bottom: 10px;
+      }
+
+      .list-group-item:hover {
+        background-color: #e9ecef; /* เปลี่ยนสีเมื่อ hover */
+      }
+
+      .list-group-item strong {
+        color: #007bff; /* สีฟ้าสำหรับข้อความที่สำคัญ */
+      }
+
+      .text-muted {
+        color: #6c757d; /* สีเทาอ่อนสำหรับข้อความที่ไม่เน้น */
+      }
+    </style>
     {% load static %}
     <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon" />
     {% block title %} {% endblock %}

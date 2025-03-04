@@ -19,6 +19,25 @@
       <li>Emotion column - ระบุอารมณ์ของแต่ละข้อความ</li>
       <li>Text column - ข้อความที่แสดงถึงอารมณ์</li>
     </ul>
+    <div class="box mb-4">
+      <p>แสดงจำนวนของแต่ละอารมณ์ใน dataset:</p>
+      <table class="table table-bordered table-striped">
+        <thead>
+          <tr>
+            <th>Emotion</th>
+            <th>Count</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for detail in class_details %}
+          <tr>
+            <td>{{ detail.Emotion }}</td>
+            <td>{{ detail.Count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
     <p><strong>ความไม่สมบูรณ์ของ dataset:</strong></p>
     <ul>
       <li>
@@ -50,7 +69,15 @@
       <li>LogisticRegression: Accuracy = 63.23%</li>
       <li>SVC (Support Vector Classification): Accuracy = 63.77%</li>
       <li>RandomForestClassifier: Accuracy = 55.40%</li>
+      {{ details.model_accuracy }}
     </ul>
+    <div class="box">
+      <h2>กราฟ Accuracy และ Loss</h2>
+      <img
+        src="data:image/png;base64,{{ model_accuracy }}"
+        alt="Accuracy and Loss Graph"
+      />
+    </div>
     <p>
       <strong>สรุป:</strong> SVC และ LogisticRegression
       มีประสิทธิภาพใกล้เคียงกัน แต่ SVC ใช้ทรัพยากรมากกว่า จึงเลือก

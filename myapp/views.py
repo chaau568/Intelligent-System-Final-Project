@@ -1,6 +1,7 @@
 import json
 import base64
 import numpy as np #type: ignore
+import pandas as pd #type: ignore
 from PIL import Image #type: ignore
 from io import BytesIO
 from django.http import JsonResponse #type: ignore
@@ -8,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt #type: ignore
 from django.shortcuts import render, redirect #type: ignore
 from .data.emotion import use_model as model_emo
 from .data.number import used_model as model_num
+from .models import User_Details
 
 latest_result = {
     "predict": None,
@@ -16,11 +18,32 @@ latest_result = {
 }
 check = 0
 
+def addToDB(model, predict, confidence):
+  confidenceTostr = str(confidence)
+  print(confidence, confidenceTostr)
+  print(type(confidenceTostr))
+  User_Details.objects.create(
+    model = model,
+    predict = predict,
+    confidence = confidenceTostr
+  )
+
 def home(request):
   return render(request, 'home.html')
 
 def emotion_details(request):
-  return render(request, 'emotion_details.html')
+  data = pd.read_csv('myapp/data/details_data/class_details.csv')
+  class_details = data[['Emotion', 'Count']]
+  class_details_dict = class_details.to_dict(orient='records')
+  img_path = 'myapp/data/details_data/accuracy_loss_graph.png'
+  with open(img_path, "rb") as img_file:
+    img_data = base64.b64encode(img_file.read()).decode('utf-8')
+  context = {
+    'class_details': class_details_dict,  # ส่งข้อมูลโดยตรง
+    'model_accuracy': img_data
+  }
+  
+  return render(request, 'emotion_details.html', context)
 
 def emotion_model(request):
   return render(request, 'emotion_model.html')
@@ -41,6 +64,7 @@ def show_result_emo(request):
       details['predict'] = result.get('predict', None)
       details['confidence'] = result.get('confidence', None)
     details['graph'] = model_emo.graph(user_input)
+    addToDB("emotion", details['predict'], details['confidence'])
   return render(request, 'show_result_emo.html', {"details": details})
 
 def number_details(request):
@@ -70,6 +94,7 @@ def process_image_function(image_data):
   latest_result['predict'] = int(result.get('predict'))
   latest_result['confidence'] = round(float(result.get('confidence')), 4)
   latest_result['graph'] = graph
+  addToDB("Digit", latest_result['predict'], latest_result['confidence'])
       
 @csrf_exempt
 def process_image(request):
@@ -98,3 +123,7 @@ def show_result_num(request):
     latest_result['graph'] = None
   check = 0
   return render(request, 'show_result_num.html', {'details': latest_result})
+
+def user_details(request):
+  data = User_Details.objects.all()
+  return render(request, 'user_details.html', {'data': data})
