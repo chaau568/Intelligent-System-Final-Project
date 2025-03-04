@@ -40,24 +40,24 @@ def predict(user_input):
     }
     return result
 def graph(confidence):
+    # เตรียมข้อมูลสำหรับแสดงผล
     classes = np.arange(10)  # หมายเลข 0-9 (10 คลาส)
-    confidence_scores = confidence * 100  # แปลงเป็นเปอร์เซ็นต์
+    confidence_scores = [c * 1 for c in confidence]  # แปลงเป็นเปอร์เซ็นต์
 
-    # กำหนดสีหลากสี
     colors = plt.cm.get_cmap('tab10', 10)(range(10))
 
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(6, 6))
     plt.bar(classes, confidence_scores, color=colors)  # สร้าง bar chart
     
     plt.xlabel("Digit Class")
     plt.ylabel("Confidence (%)")
-    plt.title("Model Confidence for Each Digit Class")
+    plt.title("Predicted Probabilities")
     plt.xticks(classes)  # กำหนดให้แกน X เป็น 0-9
-    plt.ylim(0, 100)  # กำหนดช่วง Y ให้อยู่ที่ 0-100%
+    plt.ylim(0, 120)  # กำหนดช่วง Y ให้อยู่ที่ 0-100%
 
     # แสดงค่าความมั่นใจบนแท่ง
     for i, score in enumerate(confidence_scores):
-        plt.text(i, score + 2, f"{score:.1f}%", ha='center', fontsize=10)
+        plt.text(i, score + 2, f"{score:.2f}%", ha='center', fontsize=10)
 
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight')
@@ -65,5 +65,5 @@ def graph(confidence):
     buf.seek(0)
     uri = 'data:image/png;base64,' + base64.b64encode(buf.read()).decode('utf-8')
     buf.close()
-    print(uri)
+    
     return uri

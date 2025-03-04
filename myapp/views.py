@@ -5,31 +5,22 @@ from PIL import Image #type: ignore
 from io import BytesIO
 from django.http import JsonResponse #type: ignore
 from django.views.decorators.csrf import csrf_exempt #type: ignore
-from django.shortcuts import render #type: ignore
+from django.shortcuts import render, redirect #type: ignore
 from .data.emotion import use_model as model_emo
 from .data.number import used_model as model_num
+
+latest_result = {
+    "predict": None,
+    "confidence": None,
+    "graph": None
+}
+check = 0
 
 def home(request):
   return render(request, 'home.html')
 
 def emotion_details(request):
   return render(request, 'emotion_details.html')
-
-def show_emotion_predict(user_input):
-  result = model_emo.predict(user_input)
-  return result
-
-def show_emotion_graph(user_input):
-  result = model_emo.graph(user_input)
-  return result
-
-def show_number_predict(user_input):
-  result = model_num.predict(user_input)
-  return result
-
-def show_number_graph(user_input):
-  result = model_num(user_input)
-  return result
 
 def emotion_model(request):
   return render(request, 'emotion_model.html')
@@ -45,12 +36,11 @@ def show_result_emo(request):
     user_input = request.POST.get('user_input', '')
     details['text'] = user_input
 
-    result = show_emotion_predict(user_input)
+    result = model_emo.predict(user_input)
     if isinstance(result, dict):
       details['predict'] = result.get('predict', None)
       details['confidence'] = result.get('confidence', None)
-    details['graph'] = show_emotion_graph(user_input)
-
+    details['graph'] = model_emo.graph(user_input)
   return render(request, 'show_result_emo.html', {"details": details})
 
 def number_details(request):
@@ -59,14 +49,30 @@ def number_details(request):
 def number_model(request):
   return render(request, 'number_model.html')
 
+def process_image_function(image_data):
+  image_data = image_data.split(",")[1]  # ตัด "data:image/png;base64,"
+  img = Image.open(BytesIO(base64.b64decode(image_data)))
+
+  img = img.convert("L").resize((28, 28))  # แปลงเป็นขาวดำ + ปรับขนาด 28x28
+  img_array = np.array(img) / 255.0  # Normalize เป็น 0-1
+
+  # ส่งภาพไปยังโมเดลของคุณเพื่อทำนาย
+  result = model_num.predict(img_array)
+
+  # เพิ่มค่ากราฟ (ผลลัพธ์ของการทำนายแต่ละคลาส) 
+  graph = model_num.graph(result['all_predictions'])  # คุณสามารถดึงกราฟได้จากผลลัพธ์
+
+  # อัพเดตตัวตรวจสอบค่าเก่า
+  global check
+  check = 1
+  # บันทึกผลลัพธ์ไว้
+  global latest_result
+  latest_result['predict'] = int(result.get('predict'))
+  latest_result['confidence'] = round(float(result.get('confidence')), 4)
+  latest_result['graph'] = graph
+      
 @csrf_exempt
-def show_result_num(request):
-  details = {
-    'predict': None,          
-    'confidence': None,  
-    'all_predictions': None,
-    'graph': None  
-  }
+def process_image(request):
   if request.method == "POST":
     try:
       data = json.loads(request.body)
@@ -75,23 +81,20 @@ def show_result_num(request):
       if not image_data:
         return JsonResponse({"error": "No image data"}, status=400)
 
-      # แปลง Base64 -> NumPy Array
-      image_data = image_data.split(",")[1]  # ตัด "data:image/png;base64,"
-      img = Image.open(BytesIO(base64.b64decode(image_data)))
+      process_image_function(image_data)
 
-      img = img.convert("L").resize((28, 28))  # แปลงเป็นขาวดำ + ปรับขนาด 28 x 28
-      img_array = np.array(img) / 255.0  # Normalize เป็น 0-1
-
-      result = show_number_predict(img_array)
-      if isinstance(result, dict):
-        details['predict'] = result.get('predict', None)
-        details['confidence'] = result.get('confidence', None)
-        details['all_predictions'] = result.get('all_predictions', None)
-        # details['graph'] = show_number_graph(details['all_predictions'])
-        print("Yes")
-        # return render(request, 'show_result_num.html', {"details": details})
       return JsonResponse({"message": "Image processed successfully!"})
     except Exception as e:
       return JsonResponse({"error": str(e)}, status=500)
 
   return JsonResponse({"error": "Invalid request"}, status=400)
+
+def show_result_num(request):
+  global check
+  if check == 0:
+    global latest_result
+    latest_result['predict'] = None
+    latest_result['confidence'] = None
+    latest_result['graph'] = None
+  check = 0
+  return render(request, 'show_result_num.html', {'details': latest_result})

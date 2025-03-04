@@ -1,85 +1,102 @@
-{% extends "base.html" %}
-<!--  -->
-{% block title %}
+{% extends "base.html" %} {% block title %}
 <title>Number Classification Model</title>
 <style>
   #canvas {
     border: 2px solid black;
-    background-color: white;
+    background-color: black;
+    cursor: crosshair;
   }
 </style>
-{% endblock %}
-<!--  -->
-{% block content %}
-<div>
-  <h2>Draw and Send to Django</h2>
-  <canvas
-    id="canvas"
-    width="420"
-    height="420"
-    style="background-color: black"
-  ></canvas>
-  <br />
-  <button onclick="clearCanvas()">Clear</button>
-  <button onclick="sendToServer()">Send</button>
+{% endblock %} {% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow-lg p-4">
+        <div class="card-body text-center">
+          <h2 class="mb-4 fw-bold text-primary">Draw and Send to Django</h2>
 
-  <script>
-    const canvas = document.getElementById("canvas");
-    const ctx = canvas.getContext("2d");
-    let isDrawing = false;
+          <!-- Canvas -->
+          <canvas
+            id="canvas"
+            width="420"
+            height="420"
+            class="rounded shadow"
+          ></canvas>
+          <br />
 
-    canvas.addEventListener("mousedown", () => (isDrawing = true));
-    canvas.addEventListener("mouseup", () => (isDrawing = false));
-    canvas.addEventListener("mousemove", draw);
-
-    function draw(event) {
-      if (!isDrawing) return;
-      ctx.fillStyle = "white";
-      ctx.fillRect(event.offsetX, event.offsetY, 15, 15);
-    }
-
-    function clearCanvas() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-
-    function sendToServer() {
-      const imageData = canvas.toDataURL("image/png"); // แปลงเป็น Base64
-
-      // ใช้ฟังก์ชันใน JavaScript เพื่อแปลงภาพจากขนาด  เป็น 28x28
-      const img = new Image();
-      img.src = imageData;
-      img.onload = function () {
-        const canvasResized = document.createElement("canvas");
-        const ctxResized = canvasResized.getContext("2d");
-        canvasResized.width = 28;
-        canvasResized.height = 28;
-        ctxResized.drawImage(img, 0, 0, 28, 28); // Resize image
-
-        const resizedImageData = canvasResized.toDataURL("image/png"); // ได้ Base64 ของภาพที่มีขนาด 28x28
-        fetch("/show_result_num/", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-CSRFToken": getCSRFToken(),
-          },
-          body: JSON.stringify({ image: resizedImageData }),
-        })
-          .then((response) => response.json())
-          .then((data) => alert(data.message))
-          .catch((error) => console.error("Error:", error));
-      };
-    }
-
-    function getCSRFToken() {
-      return (
-        document.cookie
-          .split("; ")
-          .find((row) => row.startsWith("csrftoken"))
-          ?.split("=")[1] || ""
-      );
-    }
-  </script>
+          <!-- Buttons -->
+          <div class="mt-4">
+            <button class="btn btn-danger me-2" onclick="clearCanvas()">
+              🧹 Clear
+            </button>
+            <button class="btn btn-success me-2" onclick="sendToServer()">
+              📤 Send
+            </button>
+            <a href="/show_result_num/" class="btn btn-primary"
+              >📊 Show Results</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
-<!--  -->
+<script>
+  const canvas = document.getElementById("canvas");
+  const ctx = canvas.getContext("2d");
+  let isDrawing = false;
+
+  canvas.addEventListener("mousedown", () => (isDrawing = true));
+  canvas.addEventListener("mouseup", () => (isDrawing = false));
+  canvas.addEventListener("mousemove", draw);
+
+  function draw(event) {
+    if (!isDrawing) return;
+    ctx.fillStyle = "white";
+    ctx.fillRect(event.offsetX, event.offsetY, 15, 15);
+  }
+
+  function clearCanvas() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function sendToServer() {
+    const imageData = canvas.toDataURL("image/png");
+
+    const img = new Image();
+    img.src = imageData;
+    img.onload = function () {
+      const canvasResized = document.createElement("canvas");
+      const ctxResized = canvasResized.getContext("2d");
+      canvasResized.width = 28;
+      canvasResized.height = 28;
+      ctxResized.drawImage(img, 0, 0, 28, 28);
+
+      const resizedImageData = canvasResized.toDataURL("image/png");
+
+      fetch("/process_image/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCSRFToken(),
+        },
+        body: JSON.stringify({ image: resizedImageData }),
+      })
+        .then((response) => response.json())
+        .then((data) => alert(data.message))
+        .catch((error) => console.error("Error:", error));
+    };
+  }
+
+  function getCSRFToken() {
+    return (
+      document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("csrftoken"))
+        ?.split("=")[1] || ""
+    );
+  }
+</script>
+
 {% endblock %}

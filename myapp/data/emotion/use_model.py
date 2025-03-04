@@ -52,10 +52,11 @@ def graph(user_input):
   )
 
   plt.title('Predicted Probabilities')
-  plt.xlabel('Class')
-  plt.ylabel('Probability (%)')
+  plt.xlabel('Emotion Class')
+  plt.ylabel('Confidence (%)')
   plt.xticks(rotation=45)
   plt.tight_layout()
+  plt.ylim(0, 100) 
 
   for bar in bars:
     yval = bar.get_height()
