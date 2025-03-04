@@ -1,6 +1,8 @@
 import matplotlib #type: ignore
 matplotlib.use('Agg')  # ใช้ non-GUI backend
 
+import io
+import base64
 import tensorflow as tf #type: ignore
 import pandas as pd #type: ignore
 import numpy as np #type: ignore
@@ -20,14 +22,48 @@ def predict(user_input):
     loaded_model = tf.keras.models.load_model('myapp/data/number/model.h5')
     
     # ทำนายผล
-    predictions = loaded_model.predict(user_input)
+    predictions = loaded_model.predict(user_input)[0]  # ได้เป็น array ขนาด (10,)
     
-    # แสดงผลลัพธ์การทำนาย
-    print(predictions)
-    predicted_class = np.argmax(predictions)  # หา class ที่โมเดลทำนาย
-    print(f"Predicted Class: {predicted_class}")
+    # 1️⃣ คลาสที่โมเดลทำนาย
+    predicted_class = np.argmax(predictions)  
+
+    # 2️⃣ ค่าความมั่นใจของคลาสที่ทำนาย
+    confidence = predictions[predicted_class] * 100  
+
+    # 3️⃣ ค่าความมั่นใจของทุกคลาส
+    all_confidences = predictions * 100  
+
+    result = {
+        'predict': predicted_class,          # Class ที่โมเดลทำนาย
+        'confidence': confidence,  # ค่าความมั่นใจของ class นั้น
+        'all_predictions': all_confidences  # รายการค่าความมั่นใจของทุกคลาส
+    }
+    return result
+def graph(confidence):
+    classes = np.arange(10)  # หมายเลข 0-9 (10 คลาส)
+    confidence_scores = confidence * 100  # แปลงเป็นเปอร์เซ็นต์
+
+    # กำหนดสีหลากสี
+    colors = plt.cm.get_cmap('tab10', 10)(range(10))
+
+    plt.figure(figsize=(8, 5))
+    plt.bar(classes, confidence_scores, color=colors)  # สร้าง bar chart
     
+    plt.xlabel("Digit Class")
+    plt.ylabel("Confidence (%)")
+    plt.title("Model Confidence for Each Digit Class")
+    plt.xticks(classes)  # กำหนดให้แกน X เป็น 0-9
+    plt.ylim(0, 100)  # กำหนดช่วง Y ให้อยู่ที่ 0-100%
 
+    # แสดงค่าความมั่นใจบนแท่ง
+    for i, score in enumerate(confidence_scores):
+        plt.text(i, score + 2, f"{score:.1f}%", ha='center', fontsize=10)
 
- 
-
+    buf = io.BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.close()
+    buf.seek(0)
+    uri = 'data:image/png;base64,' + base64.b64encode(buf.read()).decode('utf-8')
+    buf.close()
+    print(uri)
+    return uri

@@ -24,15 +24,17 @@ def show_emotion_graph(user_input):
   return result
 
 def show_number_predict(user_input):
-  model_num.predict(user_input)
+  result = model_num.predict(user_input)
+  return result
 
 def show_number_graph(user_input):
-  return 1
+  result = model_num(user_input)
+  return result
 
 def emotion_model(request):
   return render(request, 'emotion_model.html')
 
-def show_result(request):
+def show_result_emo(request):
   details = {
     'text': None,
     'predict': None,
@@ -49,7 +51,7 @@ def show_result(request):
       details['confidence'] = result.get('confidence', None)
     details['graph'] = show_emotion_graph(user_input)
 
-  return render(request, 'show_result.html', {"details": details})
+  return render(request, 'show_result_emo.html', {"details": details})
 
 def number_details(request):
   return render(request, 'number_details.html')
@@ -58,7 +60,13 @@ def number_model(request):
   return render(request, 'number_model.html')
 
 @csrf_exempt
-def process_image(request):
+def show_result_num(request):
+  details = {
+    'predict': None,          
+    'confidence': None,  
+    'all_predictions': None,
+    'graph': None  
+  }
   if request.method == "POST":
     try:
       data = json.loads(request.body)
@@ -71,16 +79,17 @@ def process_image(request):
       image_data = image_data.split(",")[1]  # ตัด "data:image/png;base64,"
       img = Image.open(BytesIO(base64.b64decode(image_data)))
 
-      # แสดงภาพเพื่อดูว่าแปลงถูกต้องหรือไม่
-      img.show()
-
       img = img.convert("L").resize((28, 28))  # แปลงเป็นขาวดำ + ปรับขนาด 28 x 28
       img_array = np.array(img) / 255.0  # Normalize เป็น 0-1
 
-      print("Processed Image Array:")
-      print(img_array)  # ดูว่าแปลงเป็นค่าที่ต้องการหรือไม่
-      show_number_predict(img_array)
-
+      result = show_number_predict(img_array)
+      if isinstance(result, dict):
+        details['predict'] = result.get('predict', None)
+        details['confidence'] = result.get('confidence', None)
+        details['all_predictions'] = result.get('all_predictions', None)
+        # details['graph'] = show_number_graph(details['all_predictions'])
+        print("Yes")
+        # return render(request, 'show_result_num.html', {"details": details})
       return JsonResponse({"message": "Image processed successfully!"})
     except Exception as e:
       return JsonResponse({"error": str(e)}, status=500)

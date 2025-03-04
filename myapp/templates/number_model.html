@@ -13,7 +13,12 @@
 {% block content %}
 <div>
   <h2>Draw and Send to Django</h2>
-  <canvas id="canvas" width="420" height="420"></canvas>
+  <canvas
+    id="canvas"
+    width="420"
+    height="420"
+    style="background-color: black"
+  ></canvas>
   <br />
   <button onclick="clearCanvas()">Clear</button>
   <button onclick="sendToServer()">Send</button>
@@ -29,8 +34,8 @@
 
     function draw(event) {
       if (!isDrawing) return;
-      ctx.fillStyle = "black";
-      ctx.fillRect(event.offsetX, event.offsetY, 15, 15); // วาดจุด 4x4 px
+      ctx.fillStyle = "white";
+      ctx.fillRect(event.offsetX, event.offsetY, 15, 15);
     }
 
     function clearCanvas() {
@@ -40,7 +45,7 @@
     function sendToServer() {
       const imageData = canvas.toDataURL("image/png"); // แปลงเป็น Base64
 
-      // ใช้ฟังก์ชันใน JavaScript เพื่อแปลงภาพจากขนาด 128x128 เป็น 28x28
+      // ใช้ฟังก์ชันใน JavaScript เพื่อแปลงภาพจากขนาด  เป็น 28x28
       const img = new Image();
       img.src = imageData;
       img.onload = function () {
@@ -51,7 +56,7 @@
         ctxResized.drawImage(img, 0, 0, 28, 28); // Resize image
 
         const resizedImageData = canvasResized.toDataURL("image/png"); // ได้ Base64 ของภาพที่มีขนาด 28x28
-        fetch("/process_image/", {
+        fetch("/show_result_num/", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
